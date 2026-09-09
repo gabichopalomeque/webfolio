@@ -529,12 +529,21 @@ function renderAllForms(){
 function wireLogin(){
   document.getElementById('login-form').addEventListener('submit', async function(e){
     e.preventDefault();
-    var email = document.getElementById('login-email').value.trim();
-    var password = document.getElementById('login-password').value;
     var errEl = document.getElementById('login-error');
     errEl.textContent = '';
+
+    if(!db){
+      errEl.textContent = 'No se pudo conectar con Supabase (revisa que css/js/config.js se hayan subido bien a GitHub). Revisa la consola del navegador (F12) para más detalle.';
+      return;
+    }
+
+    var email = document.getElementById('login-email').value.trim();
+    var password = document.getElementById('login-password').value;
     var res = await db.auth.signInWithPassword({ email: email, password: password });
-    if(res.error){ errEl.textContent = 'Correo o contraseña incorrectos.'; return; }
+    if(res.error){
+      errEl.textContent = res.error.message || 'Correo o contraseña incorrectos.';
+      return;
+    }
     showDashboard(res.data.session);
   });
 }
@@ -571,13 +580,16 @@ async function checkExistingSession(){
 }
 
 document.addEventListener('DOMContentLoaded', function(){
-  if(typeof SUPABASE_URL === 'undefined' || !window.supabase){
-    console.error('Falta config.js o la librería de Supabase.');
-    return;
-  }
-  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   wireLogin();
   wireLogout();
   wireTabs();
+
+  if(typeof SUPABASE_URL === 'undefined' || !window.supabase){
+    console.error('Falta config.js o la librería de Supabase.');
+    var errEl = document.getElementById('login-error');
+    if(errEl) errEl.textContent = 'No se pudo cargar la configuración de Supabase. Revisa que la carpeta js/ se haya subido bien a GitHub.';
+    return;
+  }
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   checkExistingSession();
 });
