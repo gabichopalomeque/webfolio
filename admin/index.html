@@ -1,0 +1,237 @@
+<!doctype html><html lang="es"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel de administración — Gabriel Palomeque</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap');
+
+  :root{
+    --bg: #050505; --panel: #0e0e0e; --panel-2: #141414;
+    --fg: #e4e4e4; --fg-dim: rgba(228,228,228,0.68); --muted: rgba(228,228,228,0.5);
+    --line: rgba(228,228,228,0.14); --accent: #fc5000; --accent-soft: rgba(252,80,0,0.14);
+    --font: 'Poppins', 'Segoe UI', Arial, sans-serif;
+    --ok: #33c46a; --err: #ff5c5c;
+  }
+  *,*::before,*::after{ box-sizing: border-box; }
+  body{
+    margin: 0; background: var(--bg); color: var(--fg);
+    font-family: var(--font); font-weight: 300; -webkit-font-smoothing: antialiased;
+  }
+  a{ color: var(--accent); }
+  h1,h2,h3,p{ margin: 0; }
+  input, textarea, select, button{ font-family: var(--font); }
+
+  /* ---------- login ---------- */
+  #login-screen{
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 1.5rem;
+  }
+  .login-box{
+    width: 100%; max-width: 360px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+    padding: 2.25rem 2rem;
+  }
+  .login-box h1{ font-size: 1.3rem; font-weight: 600; margin-bottom: 0.35rem; }
+  .login-box p.sub{ color: var(--fg-dim); font-size: 0.85rem; margin-bottom: 1.5rem; }
+  .field{ margin-bottom: 1rem; }
+  .field label{ display:block; font-size: 0.78rem; color: var(--fg-dim); margin-bottom: 0.4rem; }
+  .field input, .field textarea, .field select{
+    width: 100%; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px;
+    padding: 0.65rem 0.75rem; color: var(--fg); font-size: 0.9rem;
+  }
+  .field textarea{ resize: vertical; min-height: 4.5rem; line-height: 1.5; }
+  .field input:focus, .field textarea:focus, .field select:focus{ outline: 2px solid var(--accent); outline-offset: 1px; }
+  .btn{
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    background: var(--accent); color: #0a0806; border: 0; border-radius: 999px;
+    padding: 0.7rem 1.3rem; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+    transition: background .2s ease, transform .2s ease;
+  }
+  .btn:hover{ background: #ff6a2b; transform: translateY(-1px); }
+  .btn.secondary{ background: transparent; color: var(--fg); border: 1px solid var(--line); }
+  .btn.secondary:hover{ border-color: var(--accent); background: var(--accent-soft); }
+  .btn.danger{ background: transparent; color: var(--err); border: 1px solid rgba(255,92,92,0.4); }
+  .btn.danger:hover{ background: rgba(255,92,92,0.12); }
+  .btn.small{ padding: 0.4rem 0.85rem; font-size: 0.78rem; }
+  .btn[disabled]{ opacity: 0.5; cursor: default; }
+  #login-error{ color: var(--err); font-size: 0.82rem; margin-top: 0.75rem; min-height: 1em; }
+
+  /* ---------- dashboard shell ---------- */
+  #dashboard{ min-height: 100vh; }
+  #dash-header{
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem; background: rgba(5,5,5,0.92); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  #dash-header .brand{ font-weight: 600; font-size: 0.95rem; }
+  #dash-header .brand span{ color: var(--accent); }
+  #dash-header .right{ display: flex; align-items: center; gap: 1rem; font-size: 0.8rem; color: var(--fg-dim); }
+
+  #tabs{
+    display: flex; gap: 0.4rem; flex-wrap: wrap;
+    padding: 1rem 1.5rem; border-bottom: 1px solid var(--line);
+    position: sticky; top: 61px; z-index: 9; background: var(--bg);
+  }
+  #tabs button{
+    background: transparent; border: 1px solid var(--line); color: var(--fg-dim);
+    padding: 0.5rem 1rem; border-radius: 999px; font-size: 0.82rem; cursor: pointer;
+    transition: border-color .2s ease, color .2s ease, background .2s ease;
+  }
+  #tabs button.is-active{ border-color: var(--accent); color: var(--fg); background: var(--accent-soft); }
+  #tabs button:hover{ color: var(--fg); }
+
+  #panels{ max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
+  .panel{ display: none; }
+  .panel.is-active{ display: block; }
+  .panel h2{ font-size: 1.3rem; font-weight: 600; margin-bottom: 0.35rem; }
+  .panel > p.desc{ color: var(--fg-dim); font-size: 0.85rem; margin-bottom: 1.75rem; }
+
+  .card{
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    padding: 1.5rem; margin-bottom: 1.25rem;
+  }
+  .card h3{ font-size: 0.95rem; font-weight: 600; margin-bottom: 1rem; }
+  .row-actions{ display: flex; gap: 0.6rem; margin-top: 1rem; align-items: center; }
+  .save-status{ font-size: 0.8rem; color: var(--fg-dim); }
+  .save-status.ok{ color: var(--ok); }
+  .save-status.err{ color: var(--err); }
+
+  .list-item{
+    border: 1px solid var(--line); border-radius: 12px; padding: 1.1rem;
+    margin-bottom: 0.85rem; position: relative;
+  }
+  .list-item .field-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+  .list-item .field-grid .field.full{ grid-column: 1 / -1; }
+  .list-item .row-actions{ justify-content: space-between; }
+
+  .img-preview{
+    width: 100%; max-width: 220px; aspect-ratio: 4/5; object-fit: cover;
+    border-radius: 10px; border: 1px solid var(--line); background: #000; display: block; margin-bottom: 0.6rem;
+  }
+  .img-preview.wide{ aspect-ratio: 16/9; max-width: 320px; }
+  .upload-row{ display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+  .upload-status{ font-size: 0.78rem; color: var(--fg-dim); }
+
+  #add-item-bar{ margin-top: 0.5rem; }
+
+  @media (max-width: 640px){
+    .list-item .field-grid{ grid-template-columns: 1fr; }
+    #dash-header{ flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+    #tabs{ top: 96px; }
+  }
+</style>
+</head><body>
+
+<div id="login-screen">
+  <form class="login-box" id="login-form">
+    <h1>Panel de administración</h1>
+    <p class="sub">Gabriel Palomeque — Portafolio</p>
+    <div class="field">
+      <label for="login-email">Correo</label>
+      <input type="email" id="login-email" autocomplete="username" required>
+    </div>
+    <div class="field">
+      <label for="login-password">Contraseña</label>
+      <input type="password" id="login-password" autocomplete="current-password" required>
+    </div>
+    <button class="btn" type="submit" style="width:100%;">Entrar</button>
+    <p id="login-error"></p>
+  </form>
+</div>
+
+<div id="dashboard" hidden>
+  <header id="dash-header">
+    <div class="brand">GABRIEL PALOMEQUE<span>.</span> — Panel</div>
+    <div class="right">
+      <a href="../index.html" target="_blank">Ver sitio ↗</a>
+      <span id="user-email"></span>
+      <button class="btn secondary small" id="logout-btn">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <nav id="tabs">
+    <button data-tab="settings" class="is-active">Ajustes generales</button>
+    <button data-tab="hero">Hero</button>
+    <button data-tab="formacion">Formación</button>
+    <button data-tab="experiencia">Experiencia</button>
+    <button data-tab="showreels">Showreels</button>
+    <button data-tab="mitrabajo">Mi Trabajo</button>
+    <button data-tab="contacto">Contacto</button>
+  </nav>
+
+  <main id="panels">
+    <section class="panel is-active" id="panel-settings">
+      <h2>Ajustes generales</h2>
+      <p class="desc">WhatsApp, correo, teléfono y Behance — se usan en varias secciones del sitio.</p>
+      <div class="card" id="form-settings"></div>
+    </section>
+
+    <section class="panel" id="panel-hero">
+      <h2>Hero</h2>
+      <p class="desc">Lo primero que se ve al entrar al sitio.</p>
+      <div class="card" id="form-hero"></div>
+    </section>
+
+    <section class="panel" id="panel-formacion">
+      <h2>Formación</h2>
+      <p class="desc">Encabezado de la sección, línea de tiempo, áreas de diseño y herramientas.</p>
+      <div class="card" id="form-formacion"></div>
+      <h3 style="margin:2rem 0 1rem;font-size:1rem;">Línea de tiempo — Educación</h3>
+      <div id="list-timeline-educacion"></div>
+      <div class="row-actions"><button class="btn secondary small" data-add="timeline-educacion">+ Agregar</button></div>
+      <h3 style="margin:2rem 0 1rem;font-size:1rem;">Línea de tiempo — Formación continua</h3>
+      <div id="list-timeline-continua"></div>
+      <div class="row-actions"><button class="btn secondary small" data-add="timeline-continua">+ Agregar</button></div>
+      <h3 style="margin:2rem 0 1rem;font-size:1rem;">Áreas de diseño</h3>
+      <div id="list-areas"></div>
+      <div class="row-actions"><button class="btn secondary small" data-add="areas">+ Agregar</button></div>
+      <h3 style="margin:2rem 0 1rem;font-size:1rem;">Herramientas</h3>
+      <div id="list-tools"></div>
+      <div class="row-actions"><button class="btn secondary small" data-add="tools">+ Agregar</button></div>
+    </section>
+
+    <section class="panel" id="panel-experiencia">
+      <h2>Experiencia</h2>
+      <p class="desc">Encabezado, video de fondo, historial laboral y referencias.</p>
+      <div class="card" id="form-experiencia"></div>
+      <h3 style="margin:2rem 0 1rem;font-size:1rem;">Historial laboral</h3>
+      <div id="list-exp-items"></div>
+      <div class="row-actions"><button class="btn secondary small" data-add="exp-items">+ Agregar</button></div>
+      <h3 style="margin:2rem 0 1rem;font-size:1rem;">Referencias profesionales</h3>
+      <div id="list-exp-refs"></div>
+      <div class="row-actions"><button class="btn secondary small" data-add="exp-refs">+ Agregar</button></div>
+    </section>
+
+    <section class="panel" id="panel-showreels">
+      <h2>Showreels</h2>
+      <p class="desc">Encabezado y los videos del carrusel (pega el ID de YouTube, no el link completo).</p>
+      <div class="card" id="form-showreels"></div>
+      <h3 style="margin:2rem 0 1rem;font-size:1rem;">Videos</h3>
+      <div id="list-reels"></div>
+      <div class="row-actions"><button class="btn secondary small" data-add="reels">+ Agregar</button></div>
+    </section>
+
+    <section class="panel" id="panel-mitrabajo">
+      <h2>Mi Trabajo</h2>
+      <p class="desc">Encabezado general y las categorías/piezas de trabajo.</p>
+      <div class="card" id="form-mitrabajo"></div>
+      <h3 style="margin:2rem 0 1rem;font-size:1rem;">Categorías</h3>
+      <p class="desc" style="margin-bottom:1rem;">Cada categoría tiene sus propias piezas debajo. El "layout" define cómo se ve: <b>orbit</b> = esfera 3D, <b>grid-1</b> = una imagen grande, <b>grid-2</b> = cuadrícula, <b>embeds</b> = sitios/recorridos interactivos.</p>
+      <div id="list-categories"></div>
+      <div class="row-actions"><button class="btn secondary small" data-add="categories">+ Agregar categoría</button></div>
+    </section>
+
+    <section class="panel" id="panel-contacto">
+      <h2>Contacto</h2>
+      <p class="desc">El cierre del sitio. El WhatsApp, correo, teléfono y Behance salen de "Ajustes generales".</p>
+      <div class="card" id="form-contacto"></div>
+    </section>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
+<script src="admin.js"></script>
+</body></html>
