@@ -29,6 +29,7 @@
 
     --container: 1440px;
     --edge: clamp(1.5rem, 5vw, 4rem);
+    --photo-h: clamp(419px, min(74.6vh, 50vw), 892px);
   }
 
   *,*::before,*::after{ box-sizing: border-box; }
